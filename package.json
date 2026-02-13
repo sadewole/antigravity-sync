@@ -2,7 +2,7 @@
   "name": "antigravity-settings-sync",
   "displayName": "Antigravity Sync",
   "description": "Sync your Antigravity settings and extensions using GitHub",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "icon": "images/icon.png",
   "engines": {
     "vscode": "^1.80.0"
