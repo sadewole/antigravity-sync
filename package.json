@@ -11,9 +11,7 @@
     "Other"
   ],
   "activationEvents": [
-    "onStartupFinished",
-    "onCommand:antigravity-sync.upload",
-    "onCommand:antigravity-sync.download"
+    "onStartupFinished"
   ],
   "main": "./out/extension.js",
   "contributes": {

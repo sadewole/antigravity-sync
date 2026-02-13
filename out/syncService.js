@@ -102,9 +102,27 @@ class SyncService {
                 }
             }
         }
-        await this.githubService.ensureRepoExists();
-        await this.githubService.uploadFiles(filesToUpload, `Sync: ${new Date().toISOString()}`);
-        vscode.window.showInformationMessage('Antigravity Sync: Upload Complete');
+        try {
+            await this.githubService.ensureRepoExists();
+            await this.githubService.uploadFiles(filesToUpload, `Sync: ${new Date().toISOString()}`);
+            vscode.window.showInformationMessage('Antigravity Sync: Upload Complete');
+        }
+        catch (e) {
+            if (e.message && e.message.includes('401')) {
+                // Token might be expired or invalid
+                // Reset session and retry once
+                await this.authService.logout();
+                const newToken = await this.authService.login();
+                if (newToken) {
+                    this.githubService.setToken(newToken);
+                    await this.githubService.ensureRepoExists();
+                    await this.githubService.uploadFiles(filesToUpload, `Sync: ${new Date().toISOString()}`);
+                    vscode.window.showInformationMessage('Antigravity Sync: Upload Complete (after re-auth)');
+                    return;
+                }
+            }
+            throw e;
+        }
     }
     async download() {
         const token = await this.authService.getToken() || await this.authService.login();
@@ -113,7 +131,26 @@ class SyncService {
             return;
         }
         this.githubService.setToken(token);
-        const files = await this.githubService.downloadFiles();
+        let files;
+        try {
+            files = await this.githubService.downloadFiles();
+        }
+        catch (e) {
+            if (e.message && e.message.includes('401')) {
+                await this.authService.logout();
+                const newToken = await this.authService.login();
+                if (newToken) {
+                    this.githubService.setToken(newToken);
+                    files = await this.githubService.downloadFiles();
+                }
+                else {
+                    return;
+                }
+            }
+            else {
+                throw e;
+            }
+        }
         if (files.length === 0) {
             vscode.window.showInformationMessage('Antigravity Sync: No remote settings found.');
             return;

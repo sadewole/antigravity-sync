@@ -35,4 +35,9 @@ export class AuthService {
     public getUserName(): string | undefined {
         return this.session?.account.label;
     }
+    public async logout(): Promise<void> {
+        this.session = undefined;
+        // In a real scenario, we might want to tell VS Code to sign out, but that's complex.
+        // Forcing a new session with createIfNone: true usually triggers a prompt if the token s bad.
+    }
 }
