@@ -1,0 +1,57 @@
+{
+  "name": "antigravity-sync",
+  "displayName": "Antigravity Sync",
+  "description": "Sync your Antigravity settings and extensions using GitHub",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished",
+    "onCommand:antigravity-sync.upload",
+    "onCommand:antigravity-sync.download"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "antigravity-sync.upload",
+        "title": "Antigravity Sync: Upload Settings",
+        "category": "Antigravity"
+      },
+      {
+        "command": "antigravity-sync.download",
+        "title": "Antigravity Sync: Download Settings",
+        "category": "Antigravity"
+      }
+    ],
+    "configuration": {
+      "title": "Antigravity Sync",
+      "properties": {
+        "antigravity.sync.autoUpload": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically upload settings on change."
+        },
+        "antigravity.sync.autoDownload": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically download settings on startup."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.80.0",
+    "@types/node": "^16.11.7",
+    "typescript": "^5.1.3"
+  }
+}
