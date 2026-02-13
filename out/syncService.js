@@ -5,9 +5,13 @@ const vscode = require("vscode");
 const fs = require("fs");
 const path = require("path");
 class SyncService {
-    constructor(authService, githubService) {
+    constructor(authService, githubService, outputChannel) {
         this.authService = authService;
         this.githubService = githubService;
+        this.outputChannel = outputChannel;
+    }
+    log(message) {
+        this.outputChannel.appendLine(`[${new Date().toLocaleTimeString()}] ${message}`);
     }
     getAntigravityPath() {
         const home = process.env.HOME || process.env.USERPROFILE || '';
@@ -41,7 +45,7 @@ class SyncService {
                     results.push({ path: relativePath, content });
                 }
                 catch (e) {
-                    console.error(`Failed to read file ${filePath}: ${e}`);
+                    this.log(`Failed to read file ${filePath}: ${e}`);
                 }
             }
         }
@@ -55,6 +59,8 @@ class SyncService {
         }
         this.githubService.setToken(token);
         const filesToUpload = [];
+        this.log('Starting Upload...');
+        vscode.window.setStatusBarMessage('Antigravity Sync: Uploading...', 3000);
         // 1. VS Code Settings
         const vscodePath = this.getVSCodeUserSettingsPath();
         const vscodeSettings = ['settings.json', 'keybindings.json', 'tasks.json', 'globalStorage/storage.json', 'snippets/'];
@@ -105,6 +111,7 @@ class SyncService {
         try {
             await this.githubService.ensureRepoExists();
             await this.githubService.uploadFiles(filesToUpload, `Sync: ${new Date().toISOString()}`);
+            this.log('Upload Complete');
             vscode.window.showInformationMessage('Antigravity Sync: Upload Complete');
         }
         catch (e) {
@@ -117,7 +124,8 @@ class SyncService {
                     this.githubService.setToken(newToken);
                     await this.githubService.ensureRepoExists();
                     await this.githubService.uploadFiles(filesToUpload, `Sync: ${new Date().toISOString()}`);
-                    vscode.window.showInformationMessage('Antigravity Sync: Upload Complete (after re-auth)');
+                    this.log('Upload Complete (after re-auth)');
+                    vscode.window.showInformationMessage('Antigravity Sync: Upload Complete');
                     return;
                 }
             }
@@ -131,6 +139,8 @@ class SyncService {
             return;
         }
         this.githubService.setToken(token);
+        this.log('Starting Download...');
+        vscode.window.setStatusBarMessage('Antigravity Sync: Downloading...', 3000);
         let files;
         try {
             files = await this.githubService.downloadFiles();

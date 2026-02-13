@@ -52,12 +52,9 @@ class GitHubService {
         try {
             const user = await this.getAuthenticatedUser();
             await this.request('GET', `/repos/${user.login}/${REPO_NAME}`);
-            // console.log('Repo exists');
         }
         catch (e) {
             if (e.message && e.message.includes('404')) {
-                // Create repo
-                //  console.log('Creating repo...');
                 await this.request('POST', '/user/repos', {
                     name: REPO_NAME,
                     private: true,
@@ -72,16 +69,18 @@ class GitHubService {
     }
     async uploadFiles(files, message = 'Update settings') {
         const user = await this.getAuthenticatedUser();
+        let parentCommitSha;
+        let baseTreeSha;
         // 1. Get current commit SHA of main branch
-        let ref;
         try {
-            ref = await this.request('GET', `/repos/${user.login}/${REPO_NAME}/git/ref/heads/main`);
+            const ref = await this.request('GET', `/repos/${user.login}/${REPO_NAME}/git/ref/heads/main`);
+            parentCommitSha = ref.object.sha;
+            const commit = await this.request('GET', `/repos/${user.login}/${REPO_NAME}/git/commits/${parentCommitSha}`);
+            baseTreeSha = commit.tree.sha;
         }
         catch (e) {
-            // Branch doesn't exist or repo is empty (409)
-            // We will create a fresh commit.
+            // Branch doesn't exist or repo is empty
         }
-        const baseTree = ref ? ref.object.sha : undefined;
         // 2. Create a Tree
         const treeItems = files.map(file => ({
             path: file.path,
@@ -89,39 +88,9 @@ class GitHubService {
             type: 'blob',
             content: file.content
         }));
-        const tree = await this.request('POST', `/repos/${user.login}/${REPO_NAME}/git/trees`, {
-            base_tree: baseTree, // If undefined, creates a new root tree works?, actually base_tree must be valid SHA or omitted
-            tree: treeItems
-        });
-        // 3. Create a commit
-        const commitPayload = {
-            message: message,
-            tree: tree.sha
-        };
-        if (baseTree) {
-            commitPayload.parents = [baseTree]; // Actually use commit SHA not tree SHA for parents, request above gets ref object (commit)
-            // Wait, ref.object.sha IS the commit SHA. 
-            // BUT base_tree expects TREE sha?? No, request says:
-            // "The SHA1 of an existing Git tree object which will be used as the base for the new tree."
-            // ref.object.sha is a COMMIT. 
-            // We need to get the tree of that commit first if we want to base off it?
-            // Actually, if we pass base_tree, we merge with it.
-            // If ref is a commit, we need commit.tree.sha.
-        }
-        // Logic correction:
-        // Get ref -> Get Commit -> Get Tree SHA for base_tree
-        let baseTreeSha;
-        let parentCommitSha;
-        if (ref) {
-            parentCommitSha = ref.object.sha;
-            const commitObj = await this.request('GET', `/repos/${user.login}/${REPO_NAME}/git/commits/${parentCommitSha}`);
-            baseTreeSha = commitObj.tree.sha;
-            commitPayload.parents = [parentCommitSha];
-        }
-        // Re-request tree with correct base
-        let finalTree;
+        let tree;
         try {
-            finalTree = await this.request('POST', `/repos/${user.login}/${REPO_NAME}/git/trees`, {
+            tree = await this.request('POST', `/repos/${user.login}/${REPO_NAME}/git/trees`, {
                 base_tree: baseTreeSha,
                 tree: treeItems
             });
@@ -135,10 +104,15 @@ class GitHubService {
             }
             throw e;
         }
-        commitPayload.tree = finalTree.sha;
+        // 3. Create a commit
+        const commitPayload = {
+            message: message,
+            tree: tree.sha,
+            parents: parentCommitSha ? [parentCommitSha] : []
+        };
         const commit = await this.request('POST', `/repos/${user.login}/${REPO_NAME}/git/commits`, commitPayload);
         // 4. Update or Create the reference
-        if (ref) {
+        if (parentCommitSha) {
             await this.request('PATCH', `/repos/${user.login}/${REPO_NAME}/git/refs/heads/main`, {
                 sha: commit.sha,
                 force: true

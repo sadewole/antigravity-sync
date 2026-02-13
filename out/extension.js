@@ -17,13 +17,18 @@ async function activate(context) {
     // For simplicity, we assume token is available or will be requested.
     // Ideally we should wait for login or have a prompt.
     // We'll lazy load the token in GitHubService or SyncService.
+    // Output Channel
+    const outputChannel = vscode.window.createOutputChannel('Antigravity Sync');
+    context.subscriptions.push(outputChannel);
     githubService = new githubService_1.GitHubService();
-    syncService = new syncService_1.SyncService(authService, githubService);
+    syncService = new syncService_1.SyncService(authService, githubService, outputChannel);
     // Commands
     let uploadDisposable = vscode.commands.registerCommand('antigravity-sync.upload', async () => {
+        outputChannel.show(true);
         await syncService.upload();
     });
     let downloadDisposable = vscode.commands.registerCommand('antigravity-sync.download', async () => {
+        outputChannel.show(true);
         await syncService.download();
     });
     context.subscriptions.push(uploadDisposable);
@@ -41,12 +46,12 @@ async function activate(context) {
             if (e.affectsConfiguration('antigravity.sync'))
                 return; // Ignore our own config changes
             // Debounce this in a real app
-            console.log('Settings changed, uploading...');
+            outputChannel.appendLine('Settings changed, triggering auto-upload...');
             await syncService.upload();
         }));
         // Watch for extension changes
         context.subscriptions.push(vscode.extensions.onDidChange(async () => {
-            console.log('Extensions changed, uploading...');
+            outputChannel.appendLine('Extensions changed, triggering auto-upload...');
             await syncService.upload();
         }));
     }
