@@ -61,7 +61,7 @@ export class SyncService {
 
         // 1. VS Code Settings
         const vscodePath = this.getVSCodeUserSettingsPath();
-        const vscodeSettings = ['settings.json', 'keybindings.json', 'snippets/'];
+        const vscodeSettings = ['settings.json', 'keybindings.json', 'tasks.json', 'globalStorage/storage.json', 'snippets/'];
         
         for (const item of vscodeSettings) {
              const fullPath = path.join(vscodePath, item);

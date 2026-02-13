@@ -10,6 +10,8 @@ Antigravity Sync is a lightweight, secure extension designed to keep your develo
     -   VS Code Settings (`settings.json`)
     -   Keybindings (`keybindings.json`)
     -   User Snippets
+    -   Tasks (`tasks.json`)
+    -   UI State (`globalStorage/storage.json`)
     -   Installed Extensions list
     -   **Antigravity Data**: Syncs your history, configuration, and artifacts (`.gemini/antigravity`).
 -   **🔒 Private & Secure**: Creates a private repository (`antigravity-sync-data`) on your GitHub account. No third-party servers.
