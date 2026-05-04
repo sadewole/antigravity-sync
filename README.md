@@ -50,4 +50,4 @@ We value your privacy. Your data is stored exclusively in your own private GitHu
 
 ---
 
-**Enjoying Antigravity Sync?** [Rate it on the Marketplace](https://marketplace.visualstudio.com/items?itemName=samador.antigravity-sync) or [Star the repo](https://github.com/sadewole/antigravity-sync).
+**Enjoying Antigravity Sync?** [Rate it on the Marketplace](https://marketplace.visualstudio.com/items?itemName=samador.antigravity-settings-sync) or [Star the repo](https://github.com/sadewole/antigravity-sync).
